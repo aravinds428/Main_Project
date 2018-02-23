@@ -2,7 +2,6 @@ import re
 import tweepy
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import TreebankWordTokenizer
-from nltk.corpus import stopwords
 from textblob import TextBlob
 
 
@@ -28,7 +27,7 @@ def get_tweets(username,auths):
 
     #number_of_tweets = 200 only 126 can be obtained
 
-    tweets = api.user_timeline(screen_name=username , count = 20 , tweet_mode='extended')
+    tweets = api.user_timeline(screen_name=username , count = 200 , tweet_mode='extended')
 
      #search for particular product code is:
     #tweets = api.search(q='iphonex',count=200,tweet_mode='extended',lang='en')
@@ -45,8 +44,10 @@ def clean_tweet(tweet):
 
         #removelists includes characters to be considered exceptions
 
-        removelist1 = "@"
+        removelist1 ="@"
         removelist2="#"
+        removelist3="$"  # for finance tweets
+        removelist4="%"  # for finance tweets
         return ' '.join(re.sub(r'[^\w'+removelist1+removelist2+']' , " ", tweet).split())
     # replaces non alphanumeric characters by space and splits and joins with space
 
