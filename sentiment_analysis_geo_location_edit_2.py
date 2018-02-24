@@ -2,7 +2,15 @@ import re
 import tweepy
 from tweepy import OAuthHandler
 from textblob import TextBlob
-from nltk.stem.porter import PorterStemmer
+from geopy.geocoders import Nominatim
+import matplotlib.pyplot as plt
+
+
+''' final edited sentiment analysis based on location 
+	Completed on 24-02-17
+	updated sentiment analysis based on location 
+		remove http and unwanted symbols
+'''
 
 class TwitterClient(object):
     '''
@@ -35,7 +43,9 @@ class TwitterClient(object):
         Utility function to clean tweet text by removing links, special characters
         using simple regex statements.
         '''
-        return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t]) | (\w +:\ / \ / \S +)", " ", tweet).split())
+        rm_ls = r'[0-9]+'
+        #return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t]) | (\w +:\ / \ / \S +)", " ", tweet).split())
+        return ' '.join(re.sub(r'[^\w]' and r'http:\/\/.*[\r\n]*' and r'https?:\/\/.*[\r\n]*' and r'^RT' and rm_ls," ",tweet).split())
 
     def get_tweet_sentiment(self, tweet):
         '''
@@ -44,10 +54,8 @@ class TwitterClient(object):
         '''
         # create TextBlob object of passed tweet text
         analysis = TextBlob(self.clean_tweet(tweet))
-
-
-        print(tweet)
-        print (analysis)
+        #  print(tweet)
+        #  print (analysis)
         print('\n\n')
         # set sentiment
         if analysis.sentiment.polarity > 0:
@@ -62,19 +70,28 @@ class TwitterClient(object):
         Main function to fetch tweets and parse them.
         '''
         # empty list to store parsed tweets
+        alltweets=[]
         tweets = []
+        count = 0
+        fetched_tweets = self.api.search(q=query, count=count)
+        alltweets.extend(fetched_tweets)
+        oldest = alltweets[-1].id - 1
+        while(len(fetched_tweets)):
 
-        try:
             # call twitter api to fetch tweets
-            fetched_tweets = self.api.search(q=query, count=count)
+            #fetched_tweets = self.api.search(q=query, count=count) #,tweet_mode='extended') #, lang='en', geocode="24.558,77.722,1000km")
 
             # parsing tweets one by one
+            #count = 0
             for tweet in fetched_tweets:
                 # empty dictionary to store required params of a tweet
                 parsed_tweet = {}
 
                 # saving text of tweet
                 parsed_tweet['text'] = tweet.text
+                print("tweet :- ",count)
+                print(parsed_tweet['text'])
+                count = count+1
                 # saving sentiment of tweet
                 parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.text)
 
@@ -86,19 +103,42 @@ class TwitterClient(object):
                 else:
                     tweets.append(parsed_tweet)
 
-            # return parsed tweets
-            return tweets
+            fetched_tweets = self.api.search(q=query, count=count,max_id=oldest)
+            alltweets.extend(fetched_tweets)
+            oldest = alltweets[-1].id - 1
 
-        except tweepy.TweepError as e:
-            # print error (if any)
-            print("Error : " + str(e))
+            # return parsed tweets
+        return tweets
+
+        
+
+
+def get_lat(place):
+	geolocator=Nominatim()
+	location=geolocator.geocode(place)
+	print location.latitude, location.longitude
+	str_val=""
+	str_val=str_val+str(location.latitude)+","+str(location.longitude)  # str() for converting to string
+	return str_val
 
 
 def main():
     # creating object of TwitterClient Class
     api = TwitterClient()
     # calling function to get tweets
-    tweets = api.get_tweets(query='mayanadi lang:en', count=200) # lang:en to get only english tweets
+
+
+    # tweets = api.get_tweets(query='bjp geocode:24.558,77.722,100km lang:en', count=200)
+    # inp = raw_input("Enter the query and geocode in the format ( query=' xyz geocode:lattitude,logitude,radius in km (eg 400km) )")
+    que = raw_input("Enter the query ")
+    inp_loc = raw_input("Enter the name of the place  ")
+    inp_range = raw_input("Enter the range in km (eg 100km)")
+    str_val=get_lat(inp_loc)
+    que=que+" -filter:retweets AND -filter:replies"
+    que = que+" geocode:"+str_val+","+str(inp_range)+" lang:en" #+ " result_type:recent"
+
+    #inp = inp + ' lang:en'
+    tweets = api.get_tweets(query=que, count=200)
 
     # picking positive tweets from tweets
     ptweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive']
@@ -122,6 +162,21 @@ def main():
     for tweet in ntweets[:10]:
         print(tweet['text'])
 
+    pos = len(ptweets)
+    neg = len(ntweets)
+    neu = len(tweets) - (len(ptweets) + len(ntweets))
+
+    y = [pos, neu, neg]
+
+    display_str = "Sentiment analysis of "+ que + " in "+inp_loc
+    plt.title(display_str)
+    plt.ylabel('Number of tweets')
+    plt.xticks(range(len(y)), ['positive', 'neutral', 'negative'])
+    plt.bar(range(len(y)), height=y, width=0.75, align='center', alpha=0.8)
+    plt.show();
+
+    # for pie chart
+   
 
 if __name__ == "__main__":
     # calling main function
