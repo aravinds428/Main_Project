@@ -45,6 +45,19 @@ def get_all_tweets(screen_name):
 		print "...%s tweets downloaded so far" % (len(alltweets))
 	
 	#transform the tweepy tweets into a 2D array that will populate the csv	
+	
+	# test
+	urls = []
+	for tweets in alltweets:
+	    if tweets.entities and tweet.entities['urls']:      #test
+            for url in tweet.entities['urls']:
+                urls.append(url['expanded_url'], tweet.auther.screen_name)
+                	
+    for i in urls:
+        print(i)
+    	print("\n")
+
+	
 	outtweets = [[tweet.id_str, tweet.created_at, tweet.text.encode("utf-8")] for tweet in alltweets]
 	
 	#write the csv

@@ -127,9 +127,9 @@ def main():
     que = raw_input("Enter the query ")
     inp_loc = raw_input("Enter the name of the place  ")
     inp_range = raw_input("Enter the range in km (eg 100km)")
-    str_val=get_lat(inp_loc)
+    str_val=get_lat(inp_loc)								   # the name of the place is given to the function, it will return latitude and logitude
     que=que+" -filter:retweets AND -filter:replies"
-    que = que+" geocode:"+str_val+","+str(inp_range)+" lang:en" #+ " result_type:recent"
+    que = que+" geocode:"+str_val+","+str(inp_range)+" lang:en" #  only english tweets are retrived
 
     #inp = inp + ' lang:en'
     tweets = api.get_tweets(query=que, count=200)

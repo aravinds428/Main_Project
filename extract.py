@@ -107,7 +107,9 @@ def tweet_mains():
     #
     auths=init()
 
-    tweets = get_tweets("@narendramodi",auths)
+    #tweets = get_tweets("@narendramodi",auths)
+    inp = raw_input("Enter the name of the user  ")
+    tweets = get_tweets(inp, auths)             # inp is user name 
 
     '''
     friend list get function not complete
@@ -175,5 +177,4 @@ def tweet_mains():
 if __name__ == '__main__':
 
     #Main function call
-
     tweet_mains()
